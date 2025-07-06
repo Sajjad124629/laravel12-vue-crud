@@ -60,9 +60,9 @@ const createPost = () => {
 
                                 <!-- Submit Button -->
                                 <button type="submit"
-                                    class="bg-blue-500 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded inline-flex items-center gap-1"
+                                    class="bg-blue-500 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded inline-flex items-center gap-1 cursor-pointer"
                                     :disabled="form.processing">
-                                    ✅ Submit
+                                     Submit
                                 </button>
                             </form>
 

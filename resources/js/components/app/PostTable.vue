@@ -45,7 +45,7 @@ const deletePost = (id: number | null) => {
     <div class="w-full flex justify-end">
         <Link :href="route('post.create')">
         <button
-            class="bg-blue-500 hover:bg-blue-700 text-white text-sm font-semibold py-1 px-3 rounded my-3 flex items-center gap-1">
+            class="bg-blue-500 hover:bg-blue-700 text-white text-sm font-semibold py-1 px-3 rounded my-3 flex items-center gap-1 cursor-pointer">
             ➕ Create
         </button>
         </Link>
