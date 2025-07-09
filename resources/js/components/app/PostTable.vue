@@ -43,7 +43,7 @@ const cols =
         { field: 'id', title: '#', isUnique: true, type: 'number' },
         { field: 'title', title: 'Title' },
         { field: 'body', title: 'Body' },
-        { field: 'action', title: 'Action', sortable: false },
+        { field: 'action', title: 'Action', sort: false },
     ]) || [];
 
 // Filter Globally
