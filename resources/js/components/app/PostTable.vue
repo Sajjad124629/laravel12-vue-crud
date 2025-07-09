@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
-
+import { onMounted, reactive, ref, toRaw } from 'vue';
+import Vue3Datatable from '@bhplugin/vue3-datatable';
+import '@bhplugin/vue3-datatable/dist/style.css';
 
 // defineProps({
 //     posts:{
@@ -14,15 +15,93 @@ import { ref } from 'vue';
 //     }
 // })
 
-defineProps<{
-    posts: Array<{
-        id: number,
-        title: string,
-        body: string
-    }>
-}>()
-const showDeleteModal = ref(false)
+// defineProps<{
+//     posts: Array<{
+//         id: number,
+//         title: string,
+//         body: string
+//     }>
+// }>()
+onMounted(() => {
+    getUsers();
+});
+const showDeleteModal = ref<boolean>(false)
 const postId = ref<number | null>(null)
+const loading = ref(true);
+const total_rows = ref(0);
+const params = reactive({
+    current_page: 0,
+    pagesize: 10,
+    sort_column: 'id',
+    sort_direction: 'desc',
+    search: '',
+    column_filters: [],
+});
+const rows: any = ref(null);
+const cols =
+    ref([
+        { field: 'id', title: '#', isUnique: true, type: 'number' },
+        { field: 'title', title: 'Title' },
+        { field: 'body', title: 'Body' },
+        { field: 'action', title: 'Action', sortable: false },
+    ]) || [];
+
+// Filter Globally
+let controller: any;
+let timer: any;
+const filterUsers = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+        getUsers();
+    }, 300);
+};
+
+
+const getUsers = async () => {
+    try {
+        if (controller) controller.abort();
+        controller = new AbortController();
+        const signal = controller.signal;
+
+        loading.value = true;
+        const response = await fetch(route('post.data'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || ''
+            },
+            body: JSON.stringify(toRaw(params)),
+            signal
+        });
+
+        const data = await response.json();
+        rows.value = data?.data;
+        total_rows.value = data?.recordsFiltered || 0;
+    } catch (error) {
+        console.error('Error fetching posts:', error);
+
+    } finally {
+        loading.value = false;
+    }
+};
+
+
+const changeServer = (data: any) => {
+    params.current_page = (data.current_page - 1) * data.pagesize;
+    params.pagesize = data.pagesize;
+    params.column_filters = data.column_filters;
+    params.search = data.search;
+    if (data.sort_column !== 'action') {
+        params.sort_column = data.sort_column;
+        params.sort_direction = data.sort_direction;
+    }
+    if (data.change_type === 'search') {
+        filterUsers();
+    } else {
+        getUsers();
+    }
+};
+
 const openDeleteModal = (id: number) => {
     postId.value = id
     showDeleteModal.value = true
@@ -42,7 +121,13 @@ const deletePost = (id: number | null) => {
 }
 </script>
 <template>
-    <div class="w-full flex justify-end">
+    <div class="w-full ">
+        <h4 class="text-2xl font-semibold">Vue3 Datatable</h4>
+    </div>
+    <div class="w-full flex justify-between">
+        <input v-model="params.search" type="text"
+            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline max-w-xs"
+            placeholder="Search..." />
         <Link :href="route('post.create')">
         <button
             class="bg-blue-500 hover:bg-blue-700 text-white text-sm font-semibold py-1 px-3 rounded my-3 flex items-center gap-1 cursor-pointer">
@@ -50,45 +135,30 @@ const deletePost = (id: number | null) => {
         </button>
         </Link>
     </div>
-    <div class="overflow-x-auto rounded-3xl">
-        <div class="max-w-full overflow-hidden rounded-3xl shadow-lg border border-zinc-200 dark:border-zinc-500">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-zinc-400 text-white sticky top-0 z-10">
-                    <tr>
-                        <th class="px-6 py-4 text-sm font-semibold tracking-wide">#</th>
-                        <th class="px-6 py-4 text-sm font-semibold tracking-wide">Title</th>
-                        <th class="px-6 py-4 text-sm font-semibold tracking-wide">About</th>
-                        <th class="px-6 py-4 text-sm font-semibold tracking-wide">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
-                    <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800" v-for="(post, index) in posts" :key="post.id">
-
-                        <td class="px-6 py-4 text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ index + 1 }}</td>
-                        <td class="px-6 py-4 text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                            {{ post.title }}
-                        </td>
-                        <td class="px-6 py-4 text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                            {{ post.body }}
-                        </td>
-                        <td class="px-6 py-4 text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                            <Link :href="route('post.edit', post.id)">
-                            <button
-                                class="bg-blue-500 hover:bg-blue-700 text-white text-sm font-semibold py-1 px-2 rounded inline-flex items-center gap-1">
-                                ✏️ Edit
-                            </button>
-                            </Link>
-                            <button @click="openDeleteModal(post.id)"
-                                class="bg-red-500 hover:bg-red-700 text-white text-sm font-semibold py-1 px-2 rounded inline-flex items-center gap-1 ml-2">
-                                🗑️ Delete
-                            </button>
-                        </td>
-
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+    <div>
+        <!-- Datatable -->
+        <vue3-datatable :rows="rows" :columns="cols" :loading="loading" :totalRows="total_rows" :isServerMode="true"
+            :pageSize="params.pagesize" :search="params.search" :pageSizeOptions="[7, 10, 20, 30, 50, 100, 'All']"
+            :sortable="true" :sortColumn="params.sort_column" :sortDirection="params.sort_direction"
+            @change="changeServer">
+            <template #id="data">
+                {{ data.value.keyCount }}
+            </template>
+            <template #action="data">
+                <Link :href="route('post.edit', data.value.id)">
+                <button
+                    class="bg-blue-500 hover:bg-blue-700 text-white text-sm font-semibold py-1 px-2 rounded inline-flex items-center gap-1 cursor-pointer">
+                    ✏️ Edit
+                </button>
+                </Link>
+                <button @click="openDeleteModal(data.value.id)"
+                    class="bg-red-500 hover:bg-red-700 text-white text-sm font-semibold py-1 px-2 rounded inline-flex items-center gap-1 ml-2 cursor-pointer">
+                    🗑️ Delete
+                </button>
+            </template>
+        </vue3-datatable>
     </div>
+
     <!-- Delete Confirmation Modal -->
     <div v-if="showDeleteModal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
         <div class="bg-white rounded-lg shadow-md w-full max-w-sm p-6">

@@ -17,10 +17,61 @@ class PostController extends Controller
      */
     public function index()
     {
-        $posts = Post::all();
-        return Inertia::render('post/Post', ['posts' => $posts]);
+      
+        return Inertia::render('post/Post');
     }
 
+    public function postData(Request $request)
+    {
+        $columns = [
+            0 => 'id',
+            1 => 'title',
+            2 => 'body',
+        ];
+        $totalData = Post::count();
+        $totalFiltered = $totalData;
+        if ($request->input('pagesize') != 'All') {
+            $limit = $request->input('pagesize');
+        } else {
+            $limit = $totalData;
+        }
+        $current_page = $request->input('current_page'); 
+        $column = $request->input('sort_column'); 
+        $dir = $request->input('sort_direction'); //asc or desc
+
+        if (empty($request->input('search'))) {
+            $posts = Post::offset($current_page)->limit($limit)->orderBy($column, $dir)->get();
+        } else {
+            $search = $request->input('search');
+            $posts = Post::where('title', 'LIKE', "%{$search}%")
+                ->orWhere('body', 'LIKE', "%{$search}%")
+                ->offset($current_page)
+                ->limit($limit)
+                ->orderBy($column, $dir)
+                ->get();
+            $totalFiltered = Post::where('title', 'LIKE', "%{$search}%")
+                ->orWhere('body', 'LIKE', "%{$search}%")
+                ->count();
+        }
+        $data = [];
+        if (!empty($posts)) {
+            foreach ($posts as $key => $post) {
+                $nestedData['id'] = $post->id;
+                $nestedData['keyCount'] =  $key + 1;
+                $nestedData['key'] = $key ;
+                $nestedData['title'] = $post->title;
+                $nestedData['body'] = $post->body;
+                $data[] = $nestedData;
+                $nestedData['keyCount']++;
+            }
+        }
+        return response()->json([
+            // "draw"            => intval($request->input('draw')),
+            'recordsTotal' => intval($totalData),
+            'recordsFiltered' => intval($totalFiltered),
+            'data' => $data,
+        ]);
+    }
     /**
      * Show the form for creating a new resource.
      */
@@ -89,7 +140,7 @@ class PostController extends Controller
             [
                 'title.required' => 'Title is required',
                 'body.required' => 'Body is required',
-                
+
             ],
         );
         $errors = $validator->errors();
@@ -97,7 +148,7 @@ class PostController extends Controller
             return $this->validationError($errors->first());
         }
         $post = Post::find($id);
-       
+
         $post->update([
             'title' => $request->title,
             'body' => $request->body
@@ -113,6 +164,6 @@ class PostController extends Controller
     {
         $post = Post::find($id);
         $post->delete();
-       return $this->success('Post deleted successfully', route('post.index'));
+        return $this->success('Post deleted successfully', route('post.index'));
     }
 }
