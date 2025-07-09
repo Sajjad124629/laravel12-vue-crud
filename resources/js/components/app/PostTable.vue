@@ -124,9 +124,10 @@ const deletePost = (id: number | null) => {
     <div class="w-full ">
         <h4 class="text-2xl font-semibold">Vue3 Datatable</h4>
     </div>
-    <div class="w-full flex justify-between">
+     
+    <div class="w-full flex justify-between items-center">
         <input v-model="params.search" type="text"
-            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline max-w-xs"
+            class="rounded-md border border-[#e0e6ed] bg-white px-4 py-2 text-sm font-semibold text-black !outline-none focus:border-primary focus:ring-transparent dark:border-[#17263c] dark:bg-[#121e32] dark:text-white-dark dark:focus:border-primary w-auto my-3"
             placeholder="Search..." />
         <Link :href="route('post.create')">
         <button
@@ -145,16 +146,18 @@ const deletePost = (id: number | null) => {
                 {{ data.value.keyCount }}
             </template>
             <template #action="data">
-                <Link :href="route('post.edit', data.value.id)">
-                <button
-                    class="bg-blue-500 hover:bg-blue-700 text-white text-sm font-semibold py-1 px-2 rounded inline-flex items-center gap-1 cursor-pointer">
-                    ✏️ Edit
-                </button>
-                </Link>
-                <button @click="openDeleteModal(data.value.id)"
-                    class="bg-red-500 hover:bg-red-700 text-white text-sm font-semibold py-1 px-2 rounded inline-flex items-center gap-1 ml-2 cursor-pointer">
-                    🗑️ Delete
-                </button>
+                <div class="flex items-center gap-5">
+                    <Link :href="route('post.edit', data.value.id)">
+                    <button
+                        class="cursor-pointer">
+                        ✏️ 
+                    </button>
+                    </Link>
+                    <button @click="openDeleteModal(data.value.id)"
+                        class=" cursor-pointer">
+                        🗑️ 
+                    </button>
+                </div>
             </template>
         </vue3-datatable>
     </div>
