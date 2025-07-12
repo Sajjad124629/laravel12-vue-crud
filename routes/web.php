@@ -9,7 +9,9 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
-
+Route::get('/csrf-token', function () {
+    return response()->json(['token' => csrf_token()]);
+})->name('csrf.token');
 Route::get('dashboard', function () {
     $people = Person::all();
     return Inertia::render('Dashboard',['people' => $people]);
